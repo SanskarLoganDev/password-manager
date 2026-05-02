@@ -24,7 +24,7 @@ function activateSetupMode() {
   _authMode = 'setup';
   document.getElementById('auth-title').textContent    = 'Create Master Password';
   document.getElementById('auth-subtitle').textContent = "This password encrypts all your data. Don't forget it.";
-  document.getElementById('confirm-group').style.display = 'block';
+  document.getElementById('confirm-group').style.display = 'flex'; // 'flex' not 'block' so gap is preserved
   document.getElementById('auth-btn').textContent      = 'Set Password & Continue';
 }
 

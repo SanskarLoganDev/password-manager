@@ -58,7 +58,7 @@ body {
 .form-group { display: flex; flex-direction: column; gap: 7px; margin-bottom: 20px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 
-label { font-size: 13px; font-weight: 600; color: var(--text-2); }
+label { font-size: 15px; font-weight: 600; color: var(--text-2); }
 
 input[type="text"],
 input[type="email"],
