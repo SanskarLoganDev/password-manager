@@ -16,7 +16,8 @@ body { overflow: hidden; }
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 56px 52px;
-  width: 480px;
+  width: 520px;
+  height: 600px;
   box-shadow: var(--shadow-lg);
 }
 
