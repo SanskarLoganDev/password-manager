@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VaultKey — Login</title>
+  <link rel="stylesheet" href="../shared/base.css" />
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+
+  <div class="login-page">
+    <div class="login-card">
+
+      <div class="login-logo">🔐</div>
+      <h1 id="auth-title">Welcome Back</h1>
+      <p id="auth-subtitle" class="subtitle">Enter your master password to unlock</p>
+
+      <div class="form-group">
+        <label for="master-password">Master Password</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="master-password"
+            placeholder="Enter master password"
+            autocomplete="current-password"
+          />
+          <button class="toggle-pw" onclick="toggleVisibility('master-password', this)">👁</button>
+        </div>
+      </div>
+
+      <div class="form-group" id="confirm-group" style="display:none">
+        <label for="confirm-password">Confirm Password</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="confirm-password"
+            placeholder="Confirm master password"
+          />
+          <button class="toggle-pw" onclick="toggleVisibility('confirm-password', this)">👁</button>
+        </div>
+      </div>
+
+      <div id="auth-error" class="error-msg" style="display:none"></div>
+
+      <button id="auth-btn" class="btn btn-primary btn-full" onclick="handleAuth()">
+        Unlock
+      </button>
+
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="../shared/utils.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

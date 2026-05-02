@@ -51,8 +51,8 @@ body {
 }
 
 .auth-logo { font-size: 52px; text-align: center; margin-bottom: 20px; }
-.auth-card h1 { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
-.subtitle { text-align: center; color: var(--muted); font-size: 15px; margin-bottom: 36px; }
+.auth-card h1 { text-align: center; font-size: 40px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+.subtitle { text-align: center; color: var(--muted); font-size: 20px; margin-bottom: 36px; }
 
 /* ── App Layout ─────────────────────────────────────────────── */
 #app-screen {

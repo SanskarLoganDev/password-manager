@@ -14,11 +14,11 @@ from backend.database import init_db, SessionLocal, MasterAuth, Credential
 from backend.auth import setup_master, login_master
 from backend.crypto import encrypt, decrypt
 
-app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path='')
-app.secret_key = 'vaultkey-dev-secret-change-on-prod'  # Fixed key so sessions survive restart during dev
+app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path='/static')
+app.secret_key = 'vaultkey-dev-secret-change-on-prod'
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = False  # False for localhost (no HTTPS)
+app.config['SESSION_COOKIE_SECURE']   = False  # False for localhost (no HTTPS)
 
 # In-memory key store: { session_id -> encryption_key }
 _session_keys = {}
@@ -31,11 +31,36 @@ def get_encryption_key():
     return _session_keys.get(sid)
 
 
-# ─── Serve Frontend ───────────────────────────────────────────────────────────
+# ─── Serve Frontend Pages ─────────────────────────────────────────────────────
 
 @app.route('/')
-def index():
-    return send_from_directory(FRONTEND_DIR, 'index.html')
+def login_page():
+    return send_from_directory(
+        os.path.join(FRONTEND_DIR, 'login'), 'login.html'
+    )
+
+@app.route('/dashboard')
+def dashboard_page():
+    return send_from_directory(
+        os.path.join(FRONTEND_DIR, 'dashboard'), 'dashboard.html'
+    )
+
+# Serve any static file under /static/... automatically via Flask's static_folder.
+# But we also need to serve files referenced by relative paths from subfolders.
+# e.g. dashboard.html references "../shared/base.css" which resolves to
+# /shared/base.css on the browser. Catch those here:
+
+@app.route('/shared/<path:filename>')
+def shared_files(filename):
+    return send_from_directory(os.path.join(FRONTEND_DIR, 'shared'), filename)
+
+@app.route('/login/<path:filename>')
+def login_files(filename):
+    return send_from_directory(os.path.join(FRONTEND_DIR, 'login'), filename)
+
+@app.route('/dashboard/<path:filename>')
+def dashboard_files(filename):
+    return send_from_directory(os.path.join(FRONTEND_DIR, 'dashboard'), filename)
 
 
 # ─── Auth Routes ──────────────────────────────────────────────────────────────
@@ -45,7 +70,7 @@ def auth_status():
     db = SessionLocal()
     try:
         master = db.query(MasterAuth).first()
-        is_setup = master is not None
+        is_setup     = master is not None
         is_logged_in = get_encryption_key() is not None
         return jsonify({"is_setup": is_setup, "is_logged_in": is_logged_in})
     finally:
@@ -60,7 +85,7 @@ def auth_setup():
         if existing:
             return jsonify({"error": "Master password already set"}), 400
 
-        data = request.get_json()
+        data     = request.get_json()
         password = data.get('password', '').strip()
         if len(password) < 8:
             return jsonify({"error": "Password must be at least 8 characters"}), 400
@@ -69,7 +94,7 @@ def auth_setup():
 
         import uuid
         sid = str(uuid.uuid4())
-        session['sid'] = sid
+        session['sid']    = sid
         _session_keys[sid] = key
 
         return jsonify({"message": "Master password set successfully"})
@@ -81,7 +106,7 @@ def auth_setup():
 def auth_login():
     db = SessionLocal()
     try:
-        data = request.get_json()
+        data     = request.get_json()
         password = data.get('password', '')
 
         key, status = login_master(db, password)
@@ -93,7 +118,7 @@ def auth_login():
 
         import uuid
         sid = str(uuid.uuid4())
-        session['sid'] = sid
+        session['sid']    = sid
         _session_keys[sid] = key
 
         return jsonify({"message": "Login successful"})
@@ -120,21 +145,21 @@ def get_credentials():
     db = SessionLocal()
     try:
         category = request.args.get('category')
-        query = db.query(Credential)
+        query    = db.query(Credential)
         if category:
             query = query.filter(Credential.category == category)
 
-        rows = query.order_by(Credential.created_at.desc()).all()
+        rows    = query.order_by(Credential.created_at.desc()).all()
         results = []
         for row in rows:
             results.append({
-                "id": row.id,
-                "category": row.category,
-                "site_name": row.site_name,
-                "username": decrypt(row.username, key) if row.username else '',
-                "email": decrypt(row.email, key) if row.email else '',
-                "password": decrypt(row.password, key),
-                "notes": decrypt(row.notes, key) if row.notes else '',
+                "id":         row.id,
+                "category":   row.category,
+                "site_name":  row.site_name,
+                "username":   decrypt(row.username, key) if row.username else '',
+                "email":      decrypt(row.email,    key) if row.email    else '',
+                "password":   decrypt(row.password, key),
+                "notes":      decrypt(row.notes,    key) if row.notes    else '',
                 "created_at": row.created_at.isoformat() if row.created_at else '',
             })
         return jsonify(results)
@@ -155,12 +180,12 @@ def add_credential():
             return jsonify({"error": "site_name, category, and password are required"}), 400
 
         cred = Credential(
-            category=data['category'],
-            site_name=data['site_name'],
-            username=encrypt(data.get('username', ''), key),
-            email=encrypt(data.get('email', ''), key),
-            password=encrypt(data['password'], key),
-            notes=encrypt(data.get('notes', ''), key),
+            category = data['category'],
+            site_name= data['site_name'],
+            username = encrypt(data.get('username', ''), key),
+            email    = encrypt(data.get('email',    ''), key),
+            password = encrypt(data['password'],         key),
+            notes    = encrypt(data.get('notes',    ''), key),
         )
         db.add(cred)
         db.commit()
@@ -183,18 +208,12 @@ def update_credential(cred_id):
             return jsonify({"error": "Not found"}), 404
 
         data = request.get_json()
-        if 'category' in data:
-            cred.category = data['category']
-        if 'site_name' in data:
-            cred.site_name = data['site_name']
-        if 'username' in data:
-            cred.username = encrypt(data['username'], key)
-        if 'email' in data:
-            cred.email = encrypt(data['email'], key)
-        if 'password' in data:
-            cred.password = encrypt(data['password'], key)
-        if 'notes' in data:
-            cred.notes = encrypt(data['notes'], key)
+        if 'category'  in data: cred.category  = data['category']
+        if 'site_name' in data: cred.site_name  = data['site_name']
+        if 'username'  in data: cred.username   = encrypt(data['username'],  key)
+        if 'email'     in data: cred.email      = encrypt(data['email'],     key)
+        if 'password'  in data: cred.password   = encrypt(data['password'],  key)
+        if 'notes'     in data: cred.notes      = encrypt(data['notes'],     key)
 
         db.commit()
         return jsonify({"message": "Updated"})
@@ -222,16 +241,15 @@ def delete_credential(cred_id):
 
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
-    categories = [
+    return jsonify([
         "E-Commerce", "Banking", "Airlines", "Social Media",
         "Email", "Streaming", "Work", "Gaming", "Government", "Other",
-    ]
-    return jsonify(categories)
+    ])
 
 
 # ─── Entry Point ──────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
     init_db()
-    print("✅ Password Manager running at http://localhost:5000")
+    print("✅  Password Manager running at http://localhost:5000")
     app.run(host='127.0.0.1', port=5000, debug=False)

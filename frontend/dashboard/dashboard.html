@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VaultKey — Dashboard</title>
+  <link rel="stylesheet" href="../shared/base.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+  <!-- ── App Shell ──────────────────────────────────────────── -->
+  <div class="app">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="logo-icon">🔐</span>
+        <span class="logo-text">VaultKey</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-category="all" onclick="filterCategory('all', this)">
+          <span class="nav-icon">🗂</span> All Entries
+        </button>
+        <button class="nav-item" data-category="E-Commerce" onclick="filterCategory('E-Commerce', this)">
+          <span class="nav-icon">🛒</span> E-Commerce
+        </button>
+        <button class="nav-item" data-category="Banking" onclick="filterCategory('Banking', this)">
+          <span class="nav-icon">🏦</span> Banking
+        </button>
+        <button class="nav-item" data-category="Airlines" onclick="filterCategory('Airlines', this)">
+          <span class="nav-icon">✈️</span> Airlines
+        </button>
+        <button class="nav-item" data-category="Social Media" onclick="filterCategory('Social Media', this)">
+          <span class="nav-icon">💬</span> Social Media
+        </button>
+        <button class="nav-item" data-category="Email" onclick="filterCategory('Email', this)">
+          <span class="nav-icon">📧</span> Email
+        </button>
+        <button class="nav-item" data-category="Streaming" onclick="filterCategory('Streaming', this)">
+          <span class="nav-icon">📺</span> Streaming
+        </button>
+        <button class="nav-item" data-category="Work" onclick="filterCategory('Work', this)">
+          <span class="nav-icon">💼</span> Work
+        </button>
+        <button class="nav-item" data-category="Gaming" onclick="filterCategory('Gaming', this)">
+          <span class="nav-icon">🎮</span> Gaming
+        </button>
+        <button class="nav-item" data-category="Government" onclick="filterCategory('Government', this)">
+          <span class="nav-icon">🏛</span> Government
+        </button>
+        <button class="nav-item" data-category="Other" onclick="filterCategory('Other', this)">
+          <span class="nav-icon">📁</span> Other
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-ghost btn-full" onclick="logout()">🚪 Lock &amp; Exit</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search entries..."
+            oninput="searchEntries()"
+          />
+        </div>
+        <button class="btn btn-primary" onclick="openModal()">+ Add Entry</button>
+      </header>
+
+      <div class="content-area">
+        <div id="category-title" class="section-title">All Entries</div>
+        <div id="entries-grid" class="entries-grid"></div>
+        <div id="empty-state" class="empty-state" style="display:none">
+          <div class="empty-icon">🔒</div>
+          <p>No entries yet. Click <strong>+ Add Entry</strong> to get started.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ── Add / Edit Modal ───────────────────────────────────── -->
+  <div id="modal-overlay" class="modal-overlay" style="display:none" onclick="closeModalOnOverlay(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Add New Entry</h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-id" />
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="form-category">
+              <option value="">Select category...</option>
+              <option>E-Commerce</option>
+              <option>Banking</option>
+              <option>Airlines</option>
+              <option>Social Media</option>
+              <option>Email</option>
+              <option>Streaming</option>
+              <option>Work</option>
+              <option>Gaming</option>
+              <option>Government</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Site / App Name *</label>
+            <input type="text" id="form-site" placeholder="e.g. Amazon, Chase, Delta" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="form-username" placeholder="Username (optional)" />
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="form-email" placeholder="Email address (optional)" />
+        </div>
+
+        <div class="form-group">
+          <label>Password *</label>
+          <div class="input-wrap">
+            <input type="password" id="form-password" placeholder="Password" />
+            <button class="toggle-pw" onclick="toggleVisibility('form-password', this)">👁</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="form-notes" placeholder="Any additional notes (optional)" rows="3"></textarea>
+        </div>
+
+        <div id="modal-error" class="error-msg" style="display:none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete Confirm Modal ───────────────────────────────── -->
+  <div id="confirm-overlay" class="modal-overlay" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2>Delete Entry?</h2>
+        <button class="modal-close" onclick="closeConfirm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete <strong id="confirm-site-name"></strong>? This cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast ──────────────────────────────────────────────── -->
+  <div id="toast" class="toast"></div>
+
+  <script src="../shared/utils.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
