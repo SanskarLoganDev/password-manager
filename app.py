@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, session, send_from_directory
-from flask_cors import CORS
 import os
 import sys
 
@@ -16,11 +15,12 @@ from backend.auth import setup_master, login_master
 from backend.crypto import encrypt, decrypt
 
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path='')
-app.secret_key = os.urandom(32)  # Random secret per session, never stored
-CORS(app, supports_credentials=True)
+app.secret_key = 'vaultkey-dev-secret-change-on-prod'  # Fixed key so sessions survive restart during dev
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = False  # False for localhost (no HTTPS)
 
 # In-memory key store: { session_id -> encryption_key }
-# Key lives only in memory, cleared on app restart or logout
 _session_keys = {}
 
 
@@ -42,7 +42,6 @@ def index():
 
 @app.route('/api/auth/status', methods=['GET'])
 def auth_status():
-    """Check if master password has been set up and if user is logged in."""
     db = SessionLocal()
     try:
         master = db.query(MasterAuth).first()
@@ -55,7 +54,6 @@ def auth_status():
 
 @app.route('/api/auth/setup', methods=['POST'])
 def auth_setup():
-    """First-run: set master password."""
     db = SessionLocal()
     try:
         existing = db.query(MasterAuth).first()
@@ -81,7 +79,6 @@ def auth_setup():
 
 @app.route('/api/auth/login', methods=['POST'])
 def auth_login():
-    """Login with master password."""
     db = SessionLocal()
     try:
         data = request.get_json()
@@ -106,7 +103,6 @@ def auth_login():
 
 @app.route('/api/auth/logout', methods=['POST'])
 def auth_logout():
-    """Clear session and drop the in-memory key."""
     sid = session.pop('sid', None)
     if sid:
         _session_keys.pop(sid, None)
@@ -226,18 +222,9 @@ def delete_credential(cred_id):
 
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
-    """Return the fixed list of categories."""
     categories = [
-        "E-Commerce",
-        "Banking",
-        "Airlines",
-        "Social Media",
-        "Email",
-        "Streaming",
-        "Work",
-        "Gaming",
-        "Government",
-        "Other",
+        "E-Commerce", "Banking", "Airlines", "Social Media",
+        "Email", "Streaming", "Work", "Gaming", "Government", "Other",
     ]
     return jsonify(categories)
 

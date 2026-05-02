@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, LargeBinary, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -30,8 +30,8 @@ class Credential(Base):
     email = Column(LargeBinary, nullable=True)
     password = Column(LargeBinary, nullable=False)
     notes = Column(LargeBinary, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 def init_db():

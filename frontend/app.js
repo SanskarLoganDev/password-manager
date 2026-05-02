@@ -1,4 +1,5 @@
-const API = 'http://127.0.0.1:5000/api';
+// ── Use relative paths so cookies are always same-origin ──────
+const API = '/api';
 
 // ── State ──────────────────────────────────────────────────────
 let allEntries = [];
@@ -21,7 +22,7 @@ const ICONS = {
 
 // ── Init ───────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
-  const res = await fetch(`${API}/auth/status`, { credentials: 'include' });
+  const res = await fetch(`${API}/auth/status`);
   const data = await res.json();
 
   if (data.is_logged_in) {
@@ -61,7 +62,6 @@ async function handleAuth() {
 
     const res = await fetch(`${API}/auth/setup`, {
       method: 'POST',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: pw }),
     });
@@ -70,7 +70,6 @@ async function handleAuth() {
   } else {
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: pw }),
     });
@@ -88,7 +87,6 @@ function showAuthError(msg) {
   el.style.display = 'block';
 }
 
-// Allow Enter key on login screen
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && document.getElementById('auth-screen').style.display !== 'none') {
     handleAuth();
@@ -96,7 +94,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 async function logout() {
-  await fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' });
+  await fetch(`${API}/auth/logout`, { method: 'POST' });
   location.reload();
 }
 
@@ -108,7 +106,7 @@ function showApp() {
 
 // ── Load & render entries ──────────────────────────────────────
 async function loadEntries() {
-  const res = await fetch(`${API}/credentials`, { credentials: 'include' });
+  const res = await fetch(`${API}/credentials`);
   if (res.status === 401) { location.reload(); return; }
   allEntries = await res.json();
   renderEntries();
@@ -150,7 +148,7 @@ function entryCard(e) {
   return `
   <div class="entry-card" id="card-${e.id}">
     <div class="entry-top">
-      <div style="display:flex;align-items:center;gap:12px">
+      <div style="display:flex;align-items:center;gap:14px">
         <div class="entry-icon">${icon}</div>
         <div>
           <div class="entry-name">${escHtml(e.site_name)}</div>
@@ -183,7 +181,7 @@ function entryCard(e) {
         <span class="field-label">Password</span>
         <div class="field-value-wrap">
           <span class="field-value masked" id="pw-${e.id}">••••••••</span>
-          <button class="reveal-btn" onclick="togglePassword(${e.id}, '${btoa(e.password)}')" title="Show/Hide">👁</button>
+          <button class="reveal-btn" onclick="togglePassword(${e.id}, '${btoa(unescape(encodeURIComponent(e.password)))}')" title="Show/Hide">👁</button>
           <button class="copy-btn" onclick="copyToClipboard('${escHtml(e.password)}', 'Password')">📋</button>
         </div>
       </div>
@@ -199,7 +197,7 @@ function entryCard(e) {
 function togglePassword(id, b64pw) {
   const el = document.getElementById(`pw-${id}`);
   if (el.classList.contains('masked')) {
-    el.textContent = atob(b64pw);
+    el.textContent = decodeURIComponent(escape(atob(b64pw)));
     el.classList.remove('masked');
   } else {
     el.textContent = '••••••••';
@@ -248,7 +246,6 @@ function openModal(id = null) {
   } else {
     document.getElementById('modal-title').textContent = 'Add New Entry';
     document.getElementById('edit-id').value = '';
-    // Pre-select current category filter
     if (currentCategory !== 'all') {
       document.getElementById('form-category').value = currentCategory;
     }
@@ -297,14 +294,12 @@ async function saveEntry() {
   if (editId) {
     res = await fetch(`${API}/credentials/${editId}`, {
       method: 'PUT',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
   } else {
     res = await fetch(`${API}/credentials`, {
       method: 'POST',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
@@ -341,10 +336,7 @@ function closeConfirm() {
 
 async function confirmDelete() {
   if (!deleteTargetId) return;
-  const res = await fetch(`${API}/credentials/${deleteTargetId}`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
+  const res = await fetch(`${API}/credentials/${deleteTargetId}`, { method: 'DELETE' });
   if (res.ok) {
     closeConfirm();
     await loadEntries();
