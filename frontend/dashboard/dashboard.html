@@ -9,10 +9,9 @@
 </head>
 <body>
 
-  <!-- ── App Shell ──────────────────────────────────────────── -->
   <div class="app">
 
-    <!-- Sidebar -->
+    <!-- ── Sidebar ────────────────────────────────────────── -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <span class="logo-icon">🔐</span>
@@ -38,8 +37,8 @@
         <button class="nav-item" data-category="Email" onclick="filterCategory('Email', this)">
           <span class="nav-icon">📧</span> Email
         </button>
-        <button class="nav-item" data-category="Streaming" onclick="filterCategory('Streaming', this)">
-          <span class="nav-icon">📺</span> Streaming
+        <button class="nav-item" data-category="Developer" onclick="filterCategory('Developer', this)">
+          <span class="nav-icon">💻</span> Developer
         </button>
         <button class="nav-item" data-category="Work" onclick="filterCategory('Work', this)">
           <span class="nav-icon">💼</span> Work
@@ -60,7 +59,7 @@
       </div>
     </aside>
 
-    <!-- Main -->
+    <!-- ── Main ───────────────────────────────────────────── -->
     <main class="main-content">
       <header class="top-bar">
         <div class="search-wrap">
@@ -106,7 +105,7 @@
               <option>Airlines</option>
               <option>Social Media</option>
               <option>Email</option>
-              <option>Streaming</option>
+              <option>Developer</option>
               <option>Work</option>
               <option>Gaming</option>
               <option>Government</option>
@@ -142,6 +141,17 @@
           <textarea id="form-notes" placeholder="Any additional notes (optional)" rows="3"></textarea>
         </div>
 
+        <!-- ── Extra Fields ─────────────────────────────── -->
+        <div class="extra-fields-section">
+          <div class="extra-fields-header">
+            <span class="extra-fields-title">Additional Fields</span>
+            <button class="btn-add-field" onclick="addExtraFieldRow()" title="Add a password or security question">
+              + Add Field
+            </button>
+          </div>
+          <div id="extra-fields-list"></div>
+        </div>
+
         <div id="modal-error" class="error-msg" style="display:none"></div>
       </div>
       <div class="modal-footer">
@@ -168,7 +178,6 @@
     </div>
   </div>
 
-  <!-- ── Toast ──────────────────────────────────────────────── -->
   <div id="toast" class="toast"></div>
 
   <script src="/shared/utils.js"></script>

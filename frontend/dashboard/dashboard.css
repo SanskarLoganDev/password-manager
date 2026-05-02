@@ -232,6 +232,13 @@ body { overflow: hidden; }
 }
 .reveal-btn:hover { color: var(--text); }
 
+/* ── Card extra fields divider ───────────────────────────────── */
+.card-extras-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 2px 0;
+}
+
 /* ── Empty state ─────────────────────────────────────────────── */
 .empty-state {
   display: flex;
@@ -244,3 +251,67 @@ body { overflow: hidden; }
   text-align: center;
 }
 .empty-icon { font-size: 56px; }
+
+/* ── Modal extra fields section ──────────────────────────────── */
+.extra-fields-section {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 20px;
+  margin-bottom: 20px;
+}
+
+.extra-fields-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.extra-fields-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.btn-add-field {
+  background: var(--primary-lt);
+  border: 1px solid rgba(108,99,255,0.25);
+  border-radius: 7px;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+.btn-add-field:hover { background: rgba(108,99,255,0.2); }
+
+/* ── Extra field row (inside modal) ──────────────────────────── */
+.extra-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.extra-field-row .ef-value-wrap {
+  /* override .input-wrap to not be position:relative blocking grid */
+  position: relative;
+}
+
+.ef-remove-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 8px 10px;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.ef-remove-btn:hover { background: var(--danger-lt); color: var(--danger); border-color: rgba(224,92,92,0.3); }
