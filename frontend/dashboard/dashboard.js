@@ -40,10 +40,41 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadEntries();
 });
 
-// ── Logout ─────────────────────────────────────────────────────
+// ── Lock — clears session key, returns to login screen ─────────
+// The Flask process keeps running so re-login is instant.
 async function logout() {
   await fetch(`${API}/auth/logout`, { method: 'POST' });
   window.location.href = '/';
+}
+
+// ── Shut Down — locks AND kills the Flask process entirely ─────
+// Use this when you're done and want nothing running in Task Manager.
+// Shows a "Shutting down..." message then closes the tab after the
+// server confirms it's exiting (the fetch will fail/resolve as server stops).
+async function shutdown() {
+  if (!confirm('Shut down VaultKey completely?\n\nThis will close the app and stop the server process.')) {
+    return;
+  }
+
+  try {
+    // Send the shutdown request — the server responds then kills itself
+    await fetch(`${API}/shutdown`, { method: 'POST' });
+  } catch {
+    // Expected: fetch may throw because the server closed mid-response
+  }
+
+  // Show a goodbye message and close the tab after a short pause
+  document.body.innerHTML = `
+    <div style="
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; height:100vh; gap:16px;
+      font-family:'Segoe UI',system-ui,sans-serif; color:#4a4f6a;
+      background:#f0f2f7;
+    ">
+      <div style="font-size:52px">🔐</div>
+      <h2 style="font-size:22px; color:#1a1d2e;">VaultKey has shut down</h2>
+      <p style="font-size:14px;">You can close this tab.</p>
+    </div>`;
 }
 
 // ── Fetch & store entries ──────────────────────────────────────
@@ -282,7 +313,7 @@ function closeModalOnOverlay(e) {
 function clearModalForm() {
   ['form-category', 'form-site', 'form-username', 'form-email', 'form-password', 'form-notes']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('edit-id').value           = '';
+  document.getElementById('edit-id').value               = '';
   document.getElementById('extra-fields-list').innerHTML = '';
 }
 

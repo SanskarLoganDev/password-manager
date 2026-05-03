@@ -3,9 +3,23 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime, timezone
 import os
+import sys
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, '..', 'passwords.db')
+# ── DB path resolution ─────────────────────────────────────────
+# When running as a PyInstaller .exe:  sys.frozen = True
+#   → DB sits next to the .exe (sys.executable), so the user's
+#     data persists and is never lost between runs.
+# When running in dev (python app.py):
+#   → DB sits at the project root, same as before.
+if getattr(sys, 'frozen', False):
+    # Packaged .exe — place passwords.db next to the executable
+    _BASE = os.path.dirname(sys.executable)
+else:
+    # Dev — place passwords.db at the project root
+    _BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+
+DB_PATH = os.path.join(_BASE, 'passwords.db')
+DB_PATH = os.path.normpath(DB_PATH)  # clean up any .. in the path
 
 engine = create_engine(f'sqlite:///{DB_PATH}', connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -52,19 +66,17 @@ class ExtraField(Base):
 def init_db():
     """
     Create all tables that don't yet exist.
-    Also handles the case where the DB was created before extra_fields was added —
-    SQLAlchemy's create_all is safe to call repeatedly; it skips existing tables
-    and only creates missing ones.
+    Safe to call on every startup — skips tables that already exist.
+    Also handles older DBs created before extra_fields was added.
     """
     Base.metadata.create_all(bind=engine)
 
-    # Verify extra_fields table actually exists (handles older DBs)
+    # Safety net: explicitly verify extra_fields exists (handles pre-existing DBs)
     with engine.connect() as conn:
         tables = conn.execute(
             text("SELECT name FROM sqlite_master WHERE type='table' AND name='extra_fields'")
         ).fetchall()
         if not tables:
-            # Shouldn't happen after create_all, but force-create as a safety net
             ExtraField.__table__.create(bind=engine)
 
 

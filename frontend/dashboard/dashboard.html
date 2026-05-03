@@ -54,8 +54,14 @@
         </button>
       </nav>
 
+      <!-- Two separate actions:
+           Lock    = clears the session key from memory, returns to login screen.
+                     The process keeps running so re-login is instant.
+           Shut Down = locks AND kills the Flask process entirely.
+                       Use this when you're done and want nothing running. -->
       <div class="sidebar-footer">
-        <button class="btn btn-ghost btn-full" onclick="logout()">🚪 Lock &amp; Exit</button>
+        <button class="btn btn-ghost btn-full" onclick="logout()">🔒 Lock</button>
+        <button class="btn btn-shutdown btn-full" onclick="shutdown()">⏻ Shut Down</button>
       </div>
     </aside>
 
