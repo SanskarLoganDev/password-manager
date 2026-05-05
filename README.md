@@ -233,4 +233,8 @@ Edit code → Test with python app.py → Run build.bat → Replace VaultKey.exe
 
 - Add category for websites (for random websites that i have an account for)
 
+- Add category for Cards (credit/debit and other cards, separate category from banking) with required fields for number, address, CVV and expiry date
+
+- Add category for mobile apps
+
 - Create a mac version for this
