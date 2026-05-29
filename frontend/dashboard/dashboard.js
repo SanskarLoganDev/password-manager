@@ -13,6 +13,7 @@ const CATEGORY_TITLES = {
   'Social Media': 'Social Media',
   'Email':        'Email',
   'Developer':    'Developer',
+  'Streaming':    'Streaming',
   'Work':         'Work',
   'Gaming':       'Gaming',
   'Government':   'Government',
@@ -26,6 +27,7 @@ const CATEGORY_ICONS = {
   'Social Media': '💬',
   'Email':        '📧',
   'Developer':    '💻',
+  'Streaming':    '📺',
   'Work':         '💼',
   'Gaming':       '🎮',
   'Government':   '🏛',
@@ -541,3 +543,4 @@ async function confirmDelete() {
     showToast('Entry deleted', 'success');
   }
 }
+

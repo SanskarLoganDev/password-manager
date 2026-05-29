@@ -377,7 +377,7 @@ def get_categories():
     """Return the fixed list of credential categories shown in the sidebar and modal."""
     return jsonify([
         "E-Commerce", "Banking", "Airlines", "Social Media",
-        "Email", "Developer", "Work", "Gaming", "Government", "Other",
+        "Email", "Developer", "Streaming", "Work", "Gaming", "Government", "Other",
     ])
 
 
@@ -404,3 +404,4 @@ if __name__ == '__main__':
     # use_reloader=False is required — the reloader spawns a second process
     # which causes double browser opens and session key loss in the .exe.
     app.run(host='127.0.0.1', port=5000, debug=False, use_reloader=False)
+
