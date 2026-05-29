@@ -165,6 +165,37 @@ body { overflow: hidden; }
   transform: translateY(-2px);
 }
 
+/* ── Drag handle — only visible on category views, not "all" ─── */
+.drag-handle {
+  font-size: 18px;
+  color: var(--muted);
+  cursor: grab;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  user-select: none;  /* prevent text selection while dragging */
+}
+.drag-handle:hover { color: var(--text-2); }
+.drag-handle:active { cursor: grabbing; }
+
+/* ── Card state during drag ───────────────────────────────────── */
+/* The card being dragged — semi-transparent so user sees where it came from */
+.entry-card.dragging {
+  opacity: 0.4;
+  border-color: var(--primary);
+  transform: scale(0.98);
+}
+
+/* The card being hovered over as a drop target — highlighted border */
+.entry-card.drag-over {
+  border-color: var(--primary);
+  border-style: dashed;
+  box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+  transform: none; /* cancel the hover lift so it doesn't interfere */
+}
+
 .entry-top {
   display: flex;
   align-items: flex-start;

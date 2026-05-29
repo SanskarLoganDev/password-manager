@@ -49,21 +49,15 @@ async function logout() {
 
 // ── Shut Down — locks AND kills the Flask process entirely ─────
 // Use this when you're done and want nothing running in Task Manager.
-// Shows a "Shutting down..." message then closes the tab after the
-// server confirms it's exiting (the fetch will fail/resolve as server stops).
 async function shutdown() {
   if (!confirm('Shut down VaultKey completely?\n\nThis will close the app and stop the server process.')) {
     return;
   }
-
   try {
-    // Send the shutdown request — the server responds then kills itself
     await fetch(`${API}/shutdown`, { method: 'POST' });
   } catch {
     // Expected: fetch may throw because the server closed mid-response
   }
-
-  // Show a goodbye message and close the tab after a short pause
   document.body.innerHTML = `
     <div style="
       display:flex; flex-direction:column; align-items:center;
@@ -85,6 +79,65 @@ async function loadEntries() {
   renderEntries();
 }
 
+// ── Card order — localStorage helpers ─────────────────────────
+// Order is stored per-category as an array of credential IDs.
+// Key format: "vaultkey_order_<category>"
+// Only applies when viewing a specific category — "all" is never ordered.
+
+function getOrderKey(category) {
+  return `vaultkey_order_${category}`;
+}
+
+/**
+ * Load the saved ID order for a category from localStorage.
+ * Returns an array of IDs, or [] if none saved yet.
+ */
+function loadOrder(category) {
+  try {
+    const raw = localStorage.getItem(getOrderKey(category));
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save the current visual order of cards to localStorage.
+ * Reads the data-id attribute from each card DOM element in the grid.
+ */
+function saveOrder(category) {
+  if (category === 'all') return; // "All Entries" is never persisted
+  const cards = document.querySelectorAll('#entries-grid .entry-card');
+  const ids   = Array.from(cards).map(c => parseInt(c.dataset.id, 10));
+  localStorage.setItem(getOrderKey(category), JSON.stringify(ids));
+}
+
+/**
+ * Apply the saved order to an array of entry objects.
+ * Entries not in the saved order (newly added) are appended at the end.
+ * This ensures new cards always appear without needing to reset order.
+ */
+function applySavedOrder(entries, category) {
+  if (category === 'all') return entries; // no ordering for "All Entries"
+
+  const savedIds = loadOrder(category);
+  if (savedIds.length === 0) return entries; // no saved order yet — use default
+
+  // Build a map for O(1) lookup
+  const entryMap = new Map(entries.map(e => [e.id, e]));
+
+  // Start with entries in saved order (filtering out any deleted ones)
+  const ordered = savedIds
+    .filter(id => entryMap.has(id))
+    .map(id => entryMap.get(id));
+
+  // Append any entries not in the saved order (newly added cards)
+  const orderedIds = new Set(savedIds);
+  entries.forEach(e => { if (!orderedIds.has(e.id)) ordered.push(e); });
+
+  return ordered;
+}
+
 // ── Render filtered/searched entries ──────────────────────────
 function renderEntries(filter = '') {
   const grid   = document.getElementById('entries-grid');
@@ -92,9 +145,13 @@ function renderEntries(filter = '') {
   const search = filter.toLowerCase();
 
   let entries = allEntries;
+
+  // Category filter
   if (currentCategory !== 'all') {
     entries = entries.filter(e => e.category === currentCategory);
   }
+
+  // Search filter
   if (search) {
     entries = entries.filter(e =>
       e.site_name.toLowerCase().includes(search) ||
@@ -110,12 +167,28 @@ function renderEntries(filter = '') {
     return;
   }
 
+  // Apply saved card order (only when not searching — searching shows all matches
+  // in relevance order and is not a good time to apply a fixed manual sort)
+  if (!search) {
+    entries = applySavedOrder(entries, currentCategory);
+  }
+
   empty.style.display = 'none';
-  grid.innerHTML = entries.map(buildEntryCard).join('');
+
+  // Render cards — draggable only when viewing a specific category (not "all", not search)
+  const isDraggable = currentCategory !== 'all' && !search;
+  grid.innerHTML = entries.map(e => buildEntryCard(e, isDraggable)).join('');
+
+  // Attach drag-and-drop listeners after rendering
+  if (isDraggable) {
+    initDragAndDrop();
+  }
 }
 
 // ── Build a single entry card's HTML ──────────────────────────
-function buildEntryCard(e) {
+// data-id is set on every card so saveOrder() can read the current visual order.
+// The drag handle (⠿) is only shown in orderable views (category-specific, no search).
+function buildEntryCard(e, draggable = false) {
   const icon        = CATEGORY_ICONS[e.category] || '📁';
   const hasUsername = e.username && e.username.trim();
   const hasEmail    = e.email    && e.email.trim();
@@ -123,9 +196,14 @@ function buildEntryCard(e) {
   const hasExtras   = e.extra_fields && e.extra_fields.length > 0;
 
   return `
-  <div class="entry-card" id="card-${e.id}">
+  <div class="entry-card ${draggable ? 'draggable' : ''}"
+       id="card-${e.id}"
+       data-id="${e.id}"
+       ${draggable ? 'draggable="true"' : ''}>
+
     <div class="entry-top">
       <div style="display:flex;align-items:center;gap:14px">
+        ${draggable ? '<span class="drag-handle" title="Drag to reorder">⠿</span>' : ''}
         <div class="entry-icon">${icon}</div>
         <div>
           <div class="entry-name">${escHtml(e.site_name)}</div>
@@ -185,6 +263,87 @@ function buildEntryCard(e) {
       </div>` : ''}
     </div>
   </div>`;
+}
+
+// ── Drag and Drop ──────────────────────────────────────────────
+// Uses the native HTML5 Drag and Drop API — no external libraries.
+// Only active when viewing a specific category (not "all", not a search).
+// Order is saved to localStorage immediately after each drop.
+
+let _dragSrcCard = null; // the card element currently being dragged
+
+function initDragAndDrop() {
+  const cards = document.querySelectorAll('#entries-grid .entry-card.draggable');
+
+  cards.forEach(card => {
+    card.addEventListener('dragstart', onDragStart);
+    card.addEventListener('dragover',  onDragOver);
+    card.addEventListener('dragenter', onDragEnter);
+    card.addEventListener('dragleave', onDragLeave);
+    card.addEventListener('drop',      onDrop);
+    card.addEventListener('dragend',   onDragEnd);
+  });
+}
+
+function onDragStart(e) {
+  _dragSrcCard = this;
+  // Store the dragged card's ID in the dataTransfer object
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', this.dataset.id);
+  // Short delay so the card doesn't immediately look "ghosted" under the cursor
+  setTimeout(() => this.classList.add('dragging'), 0);
+}
+
+function onDragOver(e) {
+  // Must prevent default to allow dropping
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  return false;
+}
+
+function onDragEnter(e) {
+  // Highlight the card the dragged item is hovering over
+  if (this !== _dragSrcCard) {
+    this.classList.add('drag-over');
+  }
+}
+
+function onDragLeave(e) {
+  this.classList.remove('drag-over');
+}
+
+function onDrop(e) {
+  e.stopPropagation();
+  e.preventDefault();
+
+  if (_dragSrcCard === this) return; // dropped on itself — do nothing
+
+  const grid = document.getElementById('entries-grid');
+  const cards = Array.from(grid.querySelectorAll('.entry-card'));
+  const srcIdx  = cards.indexOf(_dragSrcCard);
+  const destIdx = cards.indexOf(this);
+
+  // Re-insert the dragged card before or after the drop target
+  if (srcIdx < destIdx) {
+    // Dragging forward — insert after the target
+    grid.insertBefore(_dragSrcCard, this.nextSibling);
+  } else {
+    // Dragging backward — insert before the target
+    grid.insertBefore(_dragSrcCard, this);
+  }
+
+  this.classList.remove('drag-over');
+
+  // Persist the new order to localStorage immediately
+  saveOrder(currentCategory);
+}
+
+function onDragEnd(e) {
+  // Clean up all drag state classes from every card
+  document.querySelectorAll('#entries-grid .entry-card').forEach(card => {
+    card.classList.remove('dragging', 'drag-over');
+  });
+  _dragSrcCard = null;
 }
 
 // ── Toggle password reveal on card ────────────────────────────
@@ -247,7 +406,7 @@ function addExtraFieldRow(label = '', value = '') {
   list.appendChild(row);
 }
 
-/** Toggle visibility for extra field inputs (not using an id, uses sibling reference). */
+/** Toggle visibility for extra field inputs (uses sibling reference, not id). */
 function toggleVisibility2(btn) {
   const input = btn.previousElementSibling;
   if (input.type === 'password') { input.type = 'text';     btn.textContent = '🙈'; }
