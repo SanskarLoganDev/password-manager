@@ -227,9 +227,9 @@ Edit code → Test with python app.py → Run build.bat → Replace VaultKey.exe
 
 ## Future Work
 
-- Add the ability to move the cards according to our preference in the categories permanently. The cards when "all Entries" is selected can stay at random or how it was earlier (does not need to be modified)
+- Add the ability to move the cards according to our preference in the categories permanently. The cards when "all Entries" is selected can stay at random or how it was earlier (does not need to be modified): Completed
 
-- Add category for Streaming (ex: Amazon prime, Netflix etc.)
+- Add category for Streaming (ex: Amazon prime, Netflix etc.): Completed
 
 - Add category for websites (for random websites that i have an account for)
 

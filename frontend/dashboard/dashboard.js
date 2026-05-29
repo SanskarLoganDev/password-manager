@@ -17,6 +17,7 @@ const CATEGORY_TITLES = {
   'Work':         'Work',
   'Gaming':       'Gaming',
   'Government':   'Government',
+  'Websites':     'Websites',
   'Other':        'Other',
 };
 
@@ -31,6 +32,7 @@ const CATEGORY_ICONS = {
   'Work':         '💼',
   'Gaming':       '🎮',
   'Government':   '🏛',
+  'Websites':     '🌐',
   'Other':        '📁',
 };
 
@@ -543,4 +545,6 @@ async function confirmDelete() {
     showToast('Entry deleted', 'success');
   }
 }
+
+
 
